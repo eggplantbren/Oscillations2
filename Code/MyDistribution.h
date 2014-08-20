@@ -9,18 +9,20 @@
 class MyDistribution:public Distribution
 {
 	private:
-		// Limits
+		// Limits for log-period
 		double x_min, x_max;
-		double mu_min, mu_max;
 
-		// Mean of exponential distribution for amplitudes
+		// Mean of exponential interim prior for amplitudes
 		double mu;
+
+		// Upper limit of uniform interim prior for
+		// k = (mode lifetime)/period
+		double b;
 
 		double perturb_parameters();
 
 	public:
-		MyDistribution(double x_min, double x_max,
-					double mu_min, double mu_max);
+		MyDistribution(double x_min, double x_max);
 
 		void fromPrior();
 
