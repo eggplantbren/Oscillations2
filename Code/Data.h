@@ -6,7 +6,7 @@
 class Data
 {
 	private:
-		std::vector<double> t, y;
+		std::vector<double> t, y, sig;
 
 	public:
 		Data();
