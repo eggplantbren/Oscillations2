@@ -37,6 +37,40 @@ void MyModel::calculate_C()
 	// Zero the signal
 	if(!update)
 		C.assign(C.size(), vector<long double>(C[0].size(), 0.));
+
+	// Calculate frequencies from log periods
+	vector<double> frequencies(components.size());
+	for(size_t i=0; i<components.size(); i++)
+		frequencies[i] = exp(-components[i][0]);
+
+	// Calculate squared amplitudes
+	vector<double> A2(components.size());
+	for(size_t i=0; i<A2.size(); i++)
+		A2[i] = pow(components[i][1], 2);
+
+	// Calculate 1/(mode lifetimes)
+	vector<double> g(components.size());
+	for(size_t i=0; i<g.size(); i++)
+		g[i] = 1./(exp(components[i][0])*components[i][2]);
+
+	double dt;
+	double c;
+	for(size_t i=0; i<C.size(); i++)
+	{
+		for(size_t j=i; j<C[i].size(); j++)
+		{
+			c = 0.;
+			dt = t[i] - t[j];
+			for(size_t k=0; k<components.size(); k++)
+			{
+				c += A2[k]
+					*exp(-abs(dt)*g[k])
+					*cos(2*M_PI*dt*frequencies[k]);
+			}
+		}
+	}
+
+	/* NO PROMISES THIS WILL ALWAYS BE POSITIVE DEFINITE! */
 }
 
 double MyModel::perturb()
