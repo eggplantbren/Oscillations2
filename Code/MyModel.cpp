@@ -24,8 +24,9 @@ void MyModel::fromPrior()
 
 void MyModel::calculate_C()
 {
-	// Get the times from the data
+	// Get the times and noise variances from the data
 	const vector<double>& t = Data::get_instance().get_t();
+	const vector<double>& sig = Data::get_instance().get_sig();
 
 	// Update or from scratch?
 	bool update = (objects.get_added().size() < objects.get_components().size());
@@ -36,7 +37,13 @@ void MyModel::calculate_C()
 
 	// Zero the signal
 	if(!update)
+	{
 		C.assign(C.size(), vector<long double>(C[0].size(), 0.));
+
+		// Add diagonal part for noise in the measurements
+		for(size_t i=0; i<C.size(); i++)
+			C[i][i] = pow(sig[i], 2);
+	}
 
 	// Calculate frequencies from log periods
 	vector<double> frequencies(components.size());
