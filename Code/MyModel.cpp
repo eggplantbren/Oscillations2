@@ -67,6 +67,10 @@ void MyModel::calculate_C()
 					*exp(-abs(dt)*g[k])
 					*cos(2*M_PI*dt*frequencies[k]);
 			}
+
+			C[i][j] += c;
+			if(i != j)
+				C[j][i] += c;
 		}
 	}
 
