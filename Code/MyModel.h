@@ -10,7 +10,6 @@ class MyModel:public DNest3::Model
 {
 	private:
 		RJObject<MyDistribution> objects;
-		double sigma; // Noise standard deviation
 
 		// The covariance matrix
 		std::vector< std::vector<long double> > C;
