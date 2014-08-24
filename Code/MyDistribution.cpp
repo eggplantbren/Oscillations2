@@ -14,6 +14,8 @@ MyDistribution::MyDistribution(double x_min, double x_max)
 
 void MyDistribution::fromPrior()
 {
+	center = x_min + (x_max - x_min)*randomU();
+	width = 2.*randomU();
 	mu = exp(tan(M_PI*(0.97*randomU() - 0.485)));
 	b = exp(log(1.) + log(1E3)*randomU());
 }
@@ -22,9 +24,19 @@ double MyDistribution::perturb_parameters()
 {
 	double logH = 0.;
 
-	int which = randInt(2);
+	int which = randInt(4);
 
 	if(which == 0)
+	{
+		center += (x_max - x_min)*randh();
+		wrap(center, x_min, x_max);
+	}
+	else if(which == 1)
+	{
+		width += 2.*randh();
+		wrap(width, 0., 2.);
+	}
+	if(which == 2)
 	{
 		mu = log(mu);
 		mu = (atan(mu)/M_PI + 0.485)/0.97;
@@ -50,29 +62,36 @@ double MyDistribution::perturb_parameters()
 
 double MyDistribution::log_pdf(const std::vector<double>& vec) const
 {
-	if(vec[0] < x_min || vec[0] > x_max || vec[1] < 0. ||
-			vec[2] < 0. || vec[2] > b)
+	if(vec[2] < 0. || vec[2] > b)
 		return -1E300;
 
-	return -log(mu) - vec[1]/mu - log(b);
+	return -log(2.*width) - abs(vec[0] - center)/width
+		- log(mu) - vec[1]/mu
+		- log(b);
 }
 
 void MyDistribution::from_uniform(std::vector<double>& vec) const
 {
-	vec[0] = x_min + (x_max - x_min)*vec[0];
+	if(vec[0] < 0.5)
+		vec[0] = center + width*log(2.*vec[0]);
+	else
+		vec[0] = center - width*log(2. - 2.*vec[0]);
 	vec[1] = -mu*log(1. - vec[1]);
 	vec[2] = b*vec[2];
 }
 
 void MyDistribution::to_uniform(std::vector<double>& vec) const
 {
-	vec[0] = (vec[0] - x_min)/(x_max - x_min);
+	if(vec[0] < center)
+		vec[0] = 0.5*exp((vec[0] - center)/width);
+	else
+		vec[0] = 1. - 0.5*exp((center - vec[0])/width);
 	vec[1] = 1. - exp(-vec[1]/mu);
 	vec[2] = vec[2]/b;
 }
 
 void MyDistribution::print(std::ostream& out) const
 {
-	out<<mu<<' '<<b<<' ';
+	out<<center<<' '<<width<<' '<<mu<<' '<<b<<' ';
 }
 

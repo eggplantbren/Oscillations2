@@ -9,8 +9,11 @@
 class MyDistribution:public Distribution
 {
 	private:
-		// Limits for log-period
+		// Limits for center
 		double x_min, x_max;
+
+		// Center and width of bi-exponential prior for log periods
+		double center, width;
 
 		// Mean of exponential interim prior for amplitudes
 		double mu;
