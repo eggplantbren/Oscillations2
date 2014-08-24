@@ -13,7 +13,7 @@ MyDistribution::MyDistribution()
 void MyDistribution::fromPrior()
 {
 	center = tan(M_PI*(0.97*randomU() - 0.485));
-	width = 2.*randomU();
+	width = 0.1 + 2.9*randomU();
 	mu = exp(tan(M_PI*(0.97*randomU() - 0.485)));
 	b = exp(log(1.) + log(1E3)*randomU());
 }
@@ -33,8 +33,8 @@ double MyDistribution::perturb_parameters()
 	}
 	else if(which == 1)
 	{
-		width += 2.*randh();
-		wrap(width, 0., 2.);
+		width += 2.9*randh();
+		wrap(width, 0.1, 3.);
 	}
 	if(which == 2)
 	{
