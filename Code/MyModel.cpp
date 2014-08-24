@@ -8,7 +8,7 @@ using namespace std;
 using namespace DNest3;
 
 MyModel::MyModel()
-:objects(3, 10, false, MyDistribution(-10., 10.))
+:objects(3, 10, false, MyDistribution())
 ,C(Data::get_instance().get_t().size(),
 	vector<long double>(Data::get_instance().get_t().size(), 0.))
 {

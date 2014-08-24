@@ -5,16 +5,14 @@
 
 using namespace DNest3;
 
-MyDistribution::MyDistribution(double x_min, double x_max)
-:x_min(x_min)
-,x_max(x_max)
+MyDistribution::MyDistribution()
 {
 
 }
 
 void MyDistribution::fromPrior()
 {
-	center = x_min + (x_max - x_min)*randomU();
+	center = tan(M_PI*(0.97*randomU() - 0.485));
 	width = 2.*randomU();
 	mu = exp(tan(M_PI*(0.97*randomU() - 0.485)));
 	b = exp(log(1.) + log(1E3)*randomU());
@@ -28,8 +26,10 @@ double MyDistribution::perturb_parameters()
 
 	if(which == 0)
 	{
-		center += (x_max - x_min)*randh();
-		wrap(center, x_min, x_max);
+		center = (atan(center)/M_PI + 0.485)/0.97;
+		center += randh();
+		wrap(center, 0., 1.);
+		center = tan(M_PI*(0.97*center - 0.485));
 	}
 	else if(which == 1)
 	{

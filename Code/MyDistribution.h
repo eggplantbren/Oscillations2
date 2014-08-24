@@ -9,9 +9,6 @@
 class MyDistribution:public Distribution
 {
 	private:
-		// Limits for center
-		double x_min, x_max;
-
 		// Center and width of bi-exponential prior for log periods
 		double center, width;
 
@@ -25,7 +22,7 @@ class MyDistribution:public Distribution
 		double perturb_parameters();
 
 	public:
-		MyDistribution(double x_min, double x_max);
+		MyDistribution();
 
 		void fromPrior();
 
