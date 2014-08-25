@@ -15,9 +15,10 @@ class MyDistribution:public Distribution
 		// Mean of exponential interim prior for amplitudes
 		double mu;
 
-		// Upper limit of uniform interim prior for
-		// k = (mode lifetime)/period
-		double b;
+		// b = Upper limit of uniform interim prior for
+		// v = (mode lifetime)/period
+		// k = (lower limit)/(upper limit)
+		double b, k, a;
 
 		double perturb_parameters();
 
