@@ -16,6 +16,9 @@ class MyModel:public DNest3::Model
 		// The covariance matrix
 		std::vector< std::vector<long double> > C;
 
+		// Count updates without full recalculation of C
+		unsigned int staleness;
+
 		void calculate_C();
 
 	public:

@@ -46,7 +46,11 @@ void MyModel::calculate_C()
 		// Add diagonal part for noise in the measurements
 		for(size_t i=0; i<C.size(); i++)
 			C[i][i] = pow(sig[i], 2);
+
+		staleness = 0;
 	}
+	else
+		staleness++;
 
 	// Calculate frequencies from log periods
 	vector<double> frequencies(components.size());
@@ -145,7 +149,7 @@ double MyModel::logLikelihood() const
 
 void MyModel::print(std::ostream& out) const
 {
-	objects.print(out); out<<' ';
+	objects.print(out); out<<' '<<staleness<<' ';
 }
 
 string MyModel::description() const
