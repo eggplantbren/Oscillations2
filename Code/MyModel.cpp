@@ -33,6 +33,7 @@ void MyModel::calculate_C()
 
 	// Update or from scratch?
 	bool update = (objects.get_added().size() < objects.get_components().size());
+	update = update && (staleness < 10);
 
 	// Get the components
 	const vector< vector<double> >& components = (update)?(objects.get_added()):
