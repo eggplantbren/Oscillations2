@@ -7,6 +7,9 @@ sample_info.txt
 weights.txt
 posterior_sample.txt
 
+# Compiled python
+*.pyc
+
 # Compiled Object files
 *.slo
 *.lo
