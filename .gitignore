@@ -1,5 +1,12 @@
 main
 
+# DNest output files
+levels.txt
+sample.txt
+sample_info.txt
+weights.txt
+posterior_sample.txt
+
 # Compiled Object files
 *.slo
 *.lo
