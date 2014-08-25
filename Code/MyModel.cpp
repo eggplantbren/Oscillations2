@@ -3,9 +3,12 @@
 #include "Utils.h"
 #include "Data.h"
 #include <cmath>
+#include <Eigen/Dense>
+#include <Eigen/Cholesky>
 
 using namespace std;
 using namespace DNest3;
+using namespace Eigen;
 
 MyModel::MyModel()
 :objects(3, 10, false, MyDistribution())
@@ -53,7 +56,11 @@ void MyModel::calculate_C()
 	// Calculate squared amplitudes
 	vector<double> A2(components.size());
 	for(size_t i=0; i<A2.size(); i++)
+	{
 		A2[i] = pow(components[i][1], 2);
+		if(components[i][1] < 0.)
+			A2[i] *= -1;
+	}
 
 	// Calculate 1/(mode lifetimes)
 	vector<double> g(components.size());
@@ -98,11 +105,42 @@ double MyModel::perturb()
 double MyModel::logLikelihood() const
 {
 	// Get the data
-	const vector<double>& y = Data::get_instance().get_y();
+	const vector<double>& d = Data::get_instance().get_y();
+	// Copy it into an Eigen vector
+	VectorXd y(d.size());
+	for(int i=0; i<y.size(); i++)
+		y(i) = d[i];
 
-	double logL = 0.;
+	// Copy covariance matrix into an Eigen matrix
+	MatrixXd CC(C.size(), C[0].size());
+	for(size_t i=0; i<C.size(); i++)
+		for(size_t j=0; j<C[i].size(); j++)
+			CC(i, j) = C[i][j];
+
+	// Cholesky Decomp
+	Eigen::LLT<Eigen::MatrixXd> cholesky = CC.llt();
+
+	MatrixXd L = cholesky.matrixL();
+	double logDeterminant = 0.;
+	for(int i=0; i<y.size(); i++)
+		logDeterminant += 2.*log(L(i,i));
+
+	// C^-1*(y-mu)
+	VectorXd solution = cholesky.solve(y);
+
+	// y*solution
+	double exponent = 0.;
+	for(int i=0; i<y.size(); i++)
+		exponent += y(i)*solution(i);
+
+	double logL = -0.5*y.size()*log(2*M_PI)
+			- 0.5*logDeterminant - 0.5*exponent;
+
+	if(isnan(logL) || isinf(logL))
+		logL = -1E300;
 
 	return logL;
+
 }
 
 void MyModel::print(std::ostream& out) const

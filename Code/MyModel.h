@@ -5,6 +5,8 @@
 #include <vector>
 #include <RJObject.h>
 #include "MyDistribution.h"
+#include <Eigen/Dense>
+#include <Eigen/Cholesky>
 
 class MyModel:public DNest3::Model
 {
@@ -13,6 +15,7 @@ class MyModel:public DNest3::Model
 
 		// The covariance matrix
 		std::vector< std::vector<long double> > C;
+
 		void calculate_C();
 
 	public:
