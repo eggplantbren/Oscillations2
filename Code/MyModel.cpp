@@ -11,7 +11,7 @@ using namespace DNest3;
 using namespace Eigen;
 
 MyModel::MyModel()
-:objects(3, 10, false, MyDistribution())
+:objects(3, 100, false, MyDistribution())
 ,C(Data::get_instance().get_t().size(),
 	vector<long double>(Data::get_instance().get_t().size(), 0.))
 {
