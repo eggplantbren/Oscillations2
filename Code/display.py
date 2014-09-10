@@ -5,11 +5,13 @@ N_max = posterior_sample[0,1]
 
 log_periods = array([])
 amplitudesquared = array([])
+mode_lifetimes = array([])
 
 for i in xrange(0, posterior_sample.shape[0]):
   N = posterior_sample[i, 7]
   log_periods = hstack([log_periods, posterior_sample[i, 8:8+N]])
-  amplitudesquared = hstack([amplitudesquared, posterior_sample[i, 8+N_max:8+N_max+N]])
+  amplitudesquared = hstack([amplitudesquared, posterior_sample[i, 8+N_max:8+N_max+N]**2])
+  mode_lifetimes = hstack([mode_lifetimes, exp(posterior_sample[i, 8:8+N])*posterior_sample[i, 8+2*N_max:8+2*N_max+N]])
 
 figure(figsize=(10, 10))
 
@@ -35,4 +37,7 @@ hist(frequencies, 300, weights=amplitudesquared)
 xlabel(r'Frequency ($\mu$Hz)', fontsize=16)
 ylabel('Relative Power', fontsize=16)
 show()
+
+#hist(mode_lifetimes/86400., 100)
+#show()
 
