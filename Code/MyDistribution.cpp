@@ -71,7 +71,7 @@ double MyDistribution::perturb_parameters()
 
 double MyDistribution::log_pdf(const std::vector<double>& vec) const
 {
-	if(vec[2] < a || vec[2] > b)
+	if(vec[1] < 0 || vec[2] < a || vec[2] > b)
 		return -1E300;
 
 	return -log(2.*width) - abs(vec[0] - center)/width
