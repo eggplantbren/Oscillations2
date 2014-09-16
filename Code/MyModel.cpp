@@ -11,7 +11,7 @@ using namespace DNest3;
 using namespace Eigen;
 
 MyModel::MyModel()
-:objects(3, 100, false, MyDistribution())
+:objects(3, 30, false, MyDistribution())
 ,C(Data::get_instance().get_t().size(),
 	vector<long double>(Data::get_instance().get_t().size(), 0.))
 {
@@ -22,6 +22,8 @@ void MyModel::fromPrior()
 {
 	objects.fromPrior();
 	objects.consolidate_diff();
+	extra_sigma = exp(tan(M_PI*(0.97*randomU() - 0.485)));
+
 	calculate_C();
 }
 
@@ -46,7 +48,7 @@ void MyModel::calculate_C()
 
 		// Add diagonal part for noise in the measurements
 		for(size_t i=0; i<C.size(); i++)
-			C[i][i] = pow(sig[i], 2);
+			C[i][i] = pow(sig[i], 2) + pow(extra_sigma, 2);
 
 		staleness = 0;
 	}
@@ -102,6 +104,20 @@ double MyModel::perturb()
 
 	logH += objects.perturb();
 	objects.consolidate_diff();
+
+	// Update extra noise parameter
+	double diff = -extra_sigma*extra_sigma;
+	extra_sigma = log(extra_sigma);
+	extra_sigma = (atan(extra_sigma)/M_PI + 0.485)/0.97;
+	extra_sigma += randh();
+	wrap(extra_sigma, 0., 1.);
+	extra_sigma = tan(M_PI*(0.97*extra_sigma - 0.485));
+	extra_sigma = exp(extra_sigma);
+	diff += extra_sigma*extra_sigma;
+	// Update C based on extra noise move
+	for(size_t i=0; i<C.size(); i++)
+		C[i][i] += diff;
+
 	calculate_C();
 
 	return logH;
@@ -150,7 +166,9 @@ double MyModel::logLikelihood() const
 
 void MyModel::print(std::ostream& out) const
 {
-	objects.print(out); out<<' '<<staleness<<' ';
+	objects.print(out);
+	out<<extra_sigma<<' ';
+	out<<' '<<staleness<<' ';
 }
 
 string MyModel::description() const

@@ -13,6 +13,8 @@ class MyModel:public DNest3::Model
 	private:
 		RJObject<MyDistribution> objects;
 
+		double extra_sigma;
+
 		// The covariance matrix
 		std::vector< std::vector<long double> > C;
 
