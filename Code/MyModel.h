@@ -7,9 +7,13 @@
 #include "MyDistribution.h"
 #include <Eigen/Dense>
 #include <Eigen/Cholesky>
+#include <HODLR_Matrix.hpp>
+#include <HODLR_Tree.hpp>
 
 class MyModel:public DNest3::Model
 {
+	friend class HODLRSolverMatrix;
+
 	private:
 		RJObject<MyDistribution> objects;
 
@@ -41,6 +45,25 @@ class MyModel:public DNest3::Model
 		// Return string with column information
 		std::string description() const;
 };
+
+
+class HODLRSolverMatrix : public HODLR_Matrix
+{
+	private:
+		const MyModel& model;
+
+public:
+    HODLRSolverMatrix (const MyModel& model)
+        : model(model)
+    {
+    }
+
+    double get_Matrix_Entry (const unsigned i, const unsigned j) {
+        return model.C[i][j];
+    };
+
+};
+
 
 #endif
 

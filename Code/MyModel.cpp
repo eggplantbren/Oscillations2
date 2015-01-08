@@ -6,6 +6,11 @@
 #include <Eigen/Dense>
 #include <Eigen/Cholesky>
 
+
+// Eigen is column major and numpy is row major. Barf.
+typedef Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+                          Eigen::RowMajor> > RowMajorMap;
+
 using namespace std;
 using namespace DNest3;
 using namespace Eigen;
@@ -123,6 +128,10 @@ double MyModel::perturb()
 	return logH;
 }
 
+    void apply_inverse (const unsigned int n, const unsigned int nrhs,
+                        double* b, double* out) {
+    };
+
 double MyModel::logLikelihood() const
 {
 	// Get the data
@@ -137,29 +146,62 @@ double MyModel::logLikelihood() const
 	for(size_t i=0; i<C.size(); i++)
 		for(size_t j=0; j<C[i].size(); j++)
 			CC(i, j) = C[i][j];
+        // Compute the diagonal elements.
+        VectorXd diag(C.size());
+        for(size_t i=0; i<C.size(); i++)
+		diag[i] = C[i][i];
 
-	// Cholesky Decomp
-	Eigen::LLT<Eigen::MatrixXd> cholesky = CC.llt();
+	HODLRSolverMatrix matrix(*this);
+	HODLR_Tree<HODLRSolverMatrix>* solver = new HODLR_Tree<HODLRSolverMatrix> (&matrix, C.size(), 30);
 
-	MatrixXd L = cholesky.matrixL();
-	double logDeterminant = 0.;
-	for(int i=0; i<y.size(); i++)
-		logDeterminant += 2.*log(L(i,i));
+        solver->assemble_Matrix(diag, 1E-10, 's');
 
-	// C^-1*(y-mu)
-	VectorXd solution = cholesky.solve(y);
+        // Factorize the matrix.
+        solver->compute_Factor();
+
+	double logdet;
+        // Extract the log-determinant.
+        solver->compute_Determinant(logdet);
+
+        double* b = new double[C.size()];
+	double* out = new double[C.size()];
+	for(size_t i=0; i<C.size(); i++)
+		b[i] = y[i];
+
+        MatrixXd b_vec = RowMajorMap(b, C.size(), 1), alpha(C.size(), 1);
+        solver->solve(b_vec, alpha);
+        for(size_t i = 0; i<C.size(); ++i)
+          out[i] = alpha(i, 0);
+
+//	// Cholesky Decomp
+//	Eigen::LLT<Eigen::MatrixXd> cholesky = CC.llt();
+
+//	MatrixXd L = cholesky.matrixL();
+//	double logDeterminant = 0.;
+//	for(int i=0; i<y.size(); i++)
+//		logDeterminant += 2.*log(L(i,i));
+
+//	// C^-1*(y-mu)
+//	VectorXd solution = cholesky.solve(y);
+
+//	cout<<logdet<<' '<<logDeterminant<<endl;
+//	cout<<out[0]<<' '<<solution[0]<<endl<<endl;
+	//cout<<soln(0,0)<<' '<<solution[0]<<endl<<endl;
+	delete[] b;
+	delete[] out;
 
 	// y*solution
 	double exponent = 0.;
 	for(int i=0; i<y.size(); i++)
-		exponent += y(i)*solution(i);
+		exponent += y(i)*out[i];
 
 	double logL = -0.5*y.size()*log(2*M_PI)
-			- 0.5*logDeterminant - 0.5*exponent;
+			- 0.5*logdet - 0.5*exponent;
 
 	if(isnan(logL) || isinf(logL))
 		logL = -1E300;
 
+	delete solver;
 	return logL;
 
 }
