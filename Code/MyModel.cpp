@@ -30,10 +30,6 @@ void MyModel::fromPrior()
 
 double MyModel::calculate_C(int i, int j) const
 {
-//	// Get the times and noise variances from the data
-	const vector<double>& t = Data::get_instance().get_t();
-	const vector<double>& sig = Data::get_instance().get_sig();
-
 	// Get the times and noise variances from the data
 	const vector<double>& t = Data::get_instance().get_t();
 	const vector<double>& sig = Data::get_instance().get_sig();
