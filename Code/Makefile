@@ -1,4 +1,4 @@
-CFLAGS = -m64 -Ofast -flto -march=native -funroll-loops
+CFLAGS = -O3
 LIBS =  -lrjobject -ldnest3 -lgsl -lgslcblas -lboost_system -lboost_thread
 
 default:

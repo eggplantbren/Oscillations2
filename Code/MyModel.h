@@ -19,13 +19,7 @@ class MyModel:public DNest3::Model
 
 		double extra_sigma;
 
-		// The covariance matrix
-		std::vector< std::vector<long double> > C;
-
-		// Count updates without full recalculation of C
-		unsigned int staleness;
-
-		void calculate_C();
+		double calculate_C(int i, int j) const;
 
 	public:
 		MyModel();
@@ -59,7 +53,7 @@ public:
     }
 
     double get_Matrix_Entry (const unsigned i, const unsigned j) {
-        return model.C[i][j];
+        return model.calculate_C(i, j);
     };
 
 };
