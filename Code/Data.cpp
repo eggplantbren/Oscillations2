@@ -35,5 +35,10 @@ void Data::load(const char* filename)
 	cout<<"# Loaded "<<t.size()<<" data points from file "
 			<<filename<<"."<<endl;
 	fin.close();
+
+	// Copy into eigen vector
+	y_eigen.resize(y.size());
+	for(size_t i=0; i<y.size(); i++)
+		y_eigen(i) = y[i];
 }
 

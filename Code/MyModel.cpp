@@ -30,6 +30,10 @@ void MyModel::fromPrior()
 
 double MyModel::calculate_C(int i, int j) const
 {
+//	// Get the times and noise variances from the data
+	const vector<double>& t = Data::get_instance().get_t();
+	const vector<double>& sig = Data::get_instance().get_sig();
+
 	// Get the times and noise variances from the data
 	const vector<double>& t = Data::get_instance().get_t();
 	const vector<double>& sig = Data::get_instance().get_sig();
@@ -90,20 +94,15 @@ double MyModel::perturb()
 double MyModel::logLikelihood() const
 {
 	// Get the data
-	const vector<double>& d = Data::get_instance().get_y();
-
-	// Copy it into an Eigen vector
-	VectorXd y(d.size());
-	for(int i=0; i<y.size(); i++)
-		y(i) = d[i];
+	const VectorXd& y = Data::get_instance().get_y_eigen();
 
 	// Compute the diagonal elements.
-	VectorXd diag(d.size());
-	for(size_t i=0; i<d.size(); i++)
+	VectorXd diag(y.size());
+	for(size_t i=0; i<y.size(); i++)
 		diag[i] = calculate_C(i, i);
 
 	HODLRSolverMatrix matrix(*this);
-	HODLR_Tree<HODLRSolverMatrix>* solver = new HODLR_Tree<HODLRSolverMatrix> (&matrix, d.size(), 30);
+	HODLR_Tree<HODLRSolverMatrix>* solver = new HODLR_Tree<HODLRSolverMatrix> (&matrix, y.size(), 30);
 
 	solver->assemble_Matrix(diag, 1E-10, 's');
 
@@ -115,14 +114,15 @@ double MyModel::logLikelihood() const
 	// Extract the log-determinant.
 	solver->compute_Determinant(logdet);
 
-	double* b = new double[d.size()];
-	double* out = new double[d.size()];
-	for(size_t i=0; i<d.size(); i++)
+	double* b = new double[y.size()];
+	double* out = new double[y.size()];
+	for(int i=0; i<y.size(); i++)
 		b[i] = y[i];
 
-	MatrixXd b_vec = RowMajorMap(b, d.size(), 1), alpha(d.size(), 1);
+	MatrixXd b_vec = RowMajorMap(b, y.size(), 1);
+	MatrixXd alpha(y.size(), 1);
 	solver->solve(b_vec, alpha);
-	for(size_t i = 0; i<d.size(); ++i)
+	for(int i=0; i<y.size(); i++)
 		out[i] = alpha(i, 0);
 
 	double exponent = 0.;
@@ -138,7 +138,6 @@ double MyModel::logLikelihood() const
 	delete[] out;
 	delete solver;
 	return logL;
-
 }
 
 void MyModel::print(std::ostream& out) const
