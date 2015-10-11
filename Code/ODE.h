@@ -13,7 +13,11 @@ class ODE:public DNest3::Model
 		RJObject<MyDistribution> objects;
 		double extra_sigma;
 
-		double calculate_C(int i, int j) const;
+		// Calculate derivatives
+		std::vector<double> deriv(const std::vector<double>& state);
+
+		// RK4 algorithm
+		void advance_RK4(std::vector<double>& state, double dt);
 
 	public:
 		ODE();

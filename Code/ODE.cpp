@@ -53,3 +53,31 @@ string ODE::description() const
 	return string("objects");
 }
 
+void ODE::advance_RK4(vector<double>& state, double dt)
+{
+	vector<double> f1 = deriv(state);
+
+	vector<double> temp = state;
+	for(size_t i=0; i<temp.size(); i++)
+		temp[i] += 0.5*dt*f1[i];
+	vector<double> f2 = deriv(temp);
+
+	temp = state;
+	for(size_t i=0; i<temp.size(); i++)
+		temp[i] += 0.5*dt*f2[i];
+	vector<double> f3 = deriv(temp);
+
+	temp = state;
+	for(size_t i=0; i<temp.size(); i++)
+		temp[i] += dt*f3[i];
+	vector<double> f4 = deriv(temp);
+
+	double C = dt/6.;
+	for(size_t i=0; i<state.size(); i++)
+		state[i] += C*(f1[i] + 2*f2[i] + 2*f3[i] + f4[i]);
+}
+
+vector<double> ODE::deriv(const std::vector<double>& state)
+{
+	return state;
+}
