@@ -4,7 +4,7 @@ using PyCall
 function deriv(state::Array{Float64, 1})
 	d = copy(state)
 	d[1] = state[2]
-	d[2] = -state[1]
+	d[2] = -state[1] - 0.1*state[2] + randn()
 	return d
 end
 
@@ -22,9 +22,9 @@ end
 
 steps = 1000000
 skip = 100
-dt = 0.01
+dt = 0.005
 
-state = [1.0, 0.0]
+state = [0.0, 0.0]
 
 
 keep = zeros((div(steps, skip), length(state)))
@@ -32,7 +32,7 @@ keep = zeros((div(steps, skip), length(state)))
 plt.ion()
 plt.hold(false)
 for(i in 1:steps)
-	update!(state)
+	update!(state, dt)
 
 	if(rem(i, skip) == 0)
 		keep[div(i, skip), :] = state
