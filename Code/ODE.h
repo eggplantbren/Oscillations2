@@ -16,9 +16,6 @@ class ODE:public DNest3::Model
 		// Calculate derivatives
 		std::vector<double> deriv(const std::vector<double>& state);
 
-		// RK4 algorithm
-		void advance_RK4(std::vector<double>& state, double dt);
-
 	public:
 		ODE();
 
@@ -36,6 +33,9 @@ class ODE:public DNest3::Model
 
 		// Return string with column information
 		std::string description() const;
+
+		// RK4 algorithm
+		void advance_RK4(std::vector<double>& state, double dt);
 };
 
 #endif

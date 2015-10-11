@@ -79,5 +79,8 @@ void ODE::advance_RK4(vector<double>& state, double dt)
 
 vector<double> ODE::deriv(const std::vector<double>& state)
 {
-	return state;
+	vector<double> d(state.size());
+	d[0] =  state[1];
+	d[1] = -state[0] + 0.1*state[1];
+	return d;
 }
