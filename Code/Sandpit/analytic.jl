@@ -42,9 +42,11 @@ Simulate a mode at the input times
 function simulate(t::Array{Float64, 1})
 	y = Array(Float64, length(t))
 
-	Dt = Inf::Float64
-	x = 0.0
-	v = 0.0
+	# Use stationary distribution for initial conditions
+	C = covariance(maximum([1000*tau, 1000*2*pi/omega0]))
+	n = randn(2)
+	x = C[1, 1]*n[1]
+	v = C[1, 2]^2/C[1, 1]*n[1] + sqrt(C[2, 2]^2 - C[1, 2]^4/C[1, 1]^2)*n[2]
 
 	y[1] = x
 	for(i in 2:length(t))
@@ -70,7 +72,7 @@ end
 using PyCall
 @pyimport matplotlib.pyplot as plt
 
-t = Array(linspace(0.0, 100.0, 1001))
+t = Array(linspace(0.0, 500.0, 5001))
 y = simulate(t)
 plt.plot(t, y)
 plt.show()
