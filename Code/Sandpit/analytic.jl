@@ -48,7 +48,7 @@ function simulate(t::Array{Float64, 1})
 	# Use stationary distribution for initial conditions
 	C = covariance(maximum([1000*tau, 1000*2*pi/omega0]))
 	n = randn(2)
-	(x, v) = chol(C)*n
+	(x, v) = chol(C)'*n
 	y[1] = x
 	for(i in 2:length(t))
 		Dt = t[i] - t[i-1]
@@ -60,7 +60,7 @@ function simulate(t::Array{Float64, 1})
 		(x, v) = mexp*[x; v] # Part of Equation 7
 
 		# Equations 13 and 14
-		temp = chol(C)*n
+		temp = chol(C)'*n
 		x += temp[1]
 		v += temp[2]
 
