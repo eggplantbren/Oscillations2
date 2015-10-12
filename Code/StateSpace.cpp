@@ -39,9 +39,20 @@ double StateSpace::perturb()
 
 double StateSpace::logLikelihood() const
 {
-	// Get the data
-	const VectorXd& y = Data::get_instance().get_y_eigen();
 	double logL = 0.;
+
+	// Get the data
+	const VectorXd& Y = Data::get_instance().get_y_eigen();
+
+	// Get the modes
+	const vector< vector<double> >& components = objects.get_components();
+
+	// First data point
+	double var0 = 0.;
+	for(size_t i=0; i<components.size(); i++)
+		var0 += pow(components[i][1], 2);
+	var0 += extra_sigma*extra_sigma;
+	logL += -0.5*sqrt(2*M_PI*var0) -0.5*pow(Y[0], 2)/var0;
 
 	return logL;
 }
