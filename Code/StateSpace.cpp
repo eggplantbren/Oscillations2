@@ -60,24 +60,27 @@ double StateSpace::logLikelihood() const
 	I<<1.0, 0.0, 0.0, 1.0;
 	J<<1.0/(2*omega*tau), 1.0/omega, -omega0*omega0/omega, -1.0/(2*omega*tau);
 
-	// Probability distribution for the signal (x, v)
-	// is gaussian. Its mean and covariance matrix are mu and C
-	VectorXd mu = VectorXd::Zero(2);
-	MatrixXd C(2, 2);
-
-	// For the first point, Dt=Infinity
-	C(0, 0) = D/(4*pow(omega*omega0, 2)*pow(tau, 3))*(4*pow(omega*tau, 2));
-	C(0, 1) = 0.;
-	C(1, 0) = 0.;
-	C(1, 1) = D/(4*pow(omega, 2)*pow(tau, 3))*4*pow(omega*tau, 2);
-
-	double var;
+	double Dt;
+	double var = A*A;
 	for(int i=0; i<Y.size(); i++)
 	{
 		// Probability distribution for the data point given the signal
-		var = C(0, 0) + pow(extra_sigma, 2);
-		logL += -0.5*log(2*M_PI*var) - 0.5*pow(Y[i], 2)/var;
-		
+		var += pow(extra_sigma, 2);
+		logL += -0.5*log(2*M_PI*var) - 0.5*pow(Y[i] - mu[0], 2)/var;
+
+		// Time to next data point
+		Dt = t[i+1] - t[i];
+
+		// Update C and mu
+		C(0, 0) = D/(4*pow(omega*omega0, 2)*pow(tau, 3))*
+					(4*pow(omega*tau, 2) + exp(-Dt/tau)*
+					(cos(2*omega*Dt) - 2*omega*tau*sin(2*omega*Dt) -
+							 4*pow(omega0*tau, 2));
+//	C[1, 2] = D/(omega^2*tau^2)*exp(-Dt/tau)*sin(omega*Dt)^2
+//	C[2, 1] = C[1, 2]
+//	C[2, 2] = D/(4*omega^2*tau^3)*
+//					(4*omega^2*tau^2 + exp(-Dt/tau)*
+//					(cos(2*omega*Dt) + 2*omega*tau*sin(2*omega*Dt) - 4*omega0^2*tau^2))
 
 	}
 
