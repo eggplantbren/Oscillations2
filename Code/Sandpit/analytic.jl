@@ -9,8 +9,11 @@ omega0 = 1.0
 # Mode lifetime
 tau = 5.0
 
+# Amplitude
+A = 1.0
+
 # Something to do with the strength of the driving force
-D = 1.0
+D = A^2*omega0^2*tau
 
 # Cyclic frequency of the damped oscillator
 omega = sqrt(omega0^2 - 1.0/(4*tau^2))
@@ -45,9 +48,7 @@ function simulate(t::Array{Float64, 1})
 	# Use stationary distribution for initial conditions
 	C = covariance(maximum([1000*tau, 1000*2*pi/omega0]))
 	n = randn(2)
-	x = C[1, 1]*n[1]
-	v = C[1, 2]^2/C[1, 1]*n[1] + sqrt(C[2, 2]^2 - C[1, 2]^4/C[1, 1]^2)*n[2]
-
+	(x, v) = chol(C)*n
 	y[1] = x
 	for(i in 2:length(t))
 		Dt = t[i] - t[i-1]
@@ -59,8 +60,9 @@ function simulate(t::Array{Float64, 1})
 		(x, v) = mexp*[x; v] # Part of Equation 7
 
 		# Equations 13 and 14
-		x += C[1, 1]*n[1]
-		v += C[1, 2]^2/C[1, 1]*n[1] + sqrt(C[2, 2]^2 - C[1, 2]^4/C[1, 1]^2)*n[2]
+		temp = chol(C)*n
+		x += temp[1]
+		v += temp[2]
 
 		y[i] = x
 	end
@@ -72,7 +74,7 @@ end
 using PyCall
 @pyimport matplotlib.pyplot as plt
 
-t = Array(linspace(0.0, 500.0, 5001))
+t = Array(linspace(0.0, 100.0, 1001))
 y = simulate(t)
 plt.plot(t, y)
 plt.show()
