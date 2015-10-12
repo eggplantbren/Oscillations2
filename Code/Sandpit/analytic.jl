@@ -52,6 +52,10 @@ function simulate(t::Array{Float64, 1})
 		C = covariance(Dt)
 		n = randn(2)
 
+		# Matrix exponential (Equation 9)
+		mexp = exp(-Dt/(2*tau))*(cos(omega*Dt)*I + sin(omega*Dt)*J)
+		(x, v) = mexp*[x; v] # Part of Equation 7
+
 		# Equations 13 and 14
 		x += C[1, 1]*n[1]
 		v += C[1, 2]^2/C[1, 1]*n[1] + sqrt(C[2, 2]^2 - C[1, 2]^4/C[1, 1]^2)*n[2]
