@@ -47,6 +47,23 @@ function covariance(Dt::Float64)
 	return C
 end
 
+
+@doc """
+Evolve uncertainty (described by mean and covariance matrix)
+for a certain duration
+""" ->
+function advance!(mu::Vector{Float64}, C::Matrix{Float64}, Dt::Float64)
+	# Matrix exponential (Equation 9)
+	mexp = exp(-Dt/(2*tau))*(cos(omega*Dt)*I + sin(omega*Dt)*J)
+	mu = mexp*mu # Based on Expected value of Equation 7
+
+	# Update covariance matrix
+	C = mexp*mexp*C + covariance(dt)
+	return nothing
+end
+
+
+
 @doc """
 Simulate a mode at the input times
 """ ->
