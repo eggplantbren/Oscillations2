@@ -129,7 +129,13 @@ end
 data = readdlm("../data.txt")
 
 function badness(params::Vector{Float64})
-	return -log_likelihood(params, data)
+	f = 0.0
+	try
+		f = -log_likelihood(params, data)
+	catch
+		f = Inf
+	end
+	return f
 end
 
 using Optim
