@@ -111,10 +111,8 @@ logL = 0.
 
 for(i in 1:size(data)[1])
 	# Probability of the data point
-	var = C[1, 1] + data[i, 3]
+	var = C[1, 1] + data[i, 3]^2
 	logL += -0.5*log(2*pi*var) - 0.5*(data[i, 2] - mu[1])^2/var
-
-	plt.errorbar(data[i, 1], mu[1], yerr=sqrt(C[1,1]), fmt="ro")
 
 	# Update knowledge of signal
 	# http://math.stackexchange.com/questions/157172/product-of-two-multivariate-gaussians-distributions
@@ -126,6 +124,8 @@ for(i in 1:size(data)[1])
 	mu3 = C3*C1inv*mu1 + C3*C2inv*mu2
 	mu = mu3
 	C = C3
+
+	plt.errorbar(data[i, 1], mu[1], yerr=sqrt(C[1,1]), fmt="ro")
 
 	# Evolve
 	if(i != size(data)[1])
