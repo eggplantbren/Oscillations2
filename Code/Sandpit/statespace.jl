@@ -58,7 +58,7 @@ function advance!(mu::Vector{Float64}, C::Matrix{Float64}, Dt::Float64)
 	mu = mexp*mu # Based on Expected value of Equation 7
 
 	# Update covariance matrix
-	C = mexp*mexp*C + covariance(dt)
+	C = mexp*mexp*C + covariance(Dt)
 	return nothing
 end
 
@@ -99,8 +99,36 @@ end
 using PyCall
 @pyimport matplotlib.pyplot as plt
 
-t = Array(linspace(0.0, 1000.0, 2001))
-y = simulate(t)
-plt.plot(t, y)
-plt.show()
+data = readdlm("../data.txt")
+
+# Prior state of knowledge about signal
+mu = [0.0, 0.0]
+C = covariance(Inf)
+
+# Log likelihood
+logL = 0.
+
+for(i in 1:size(data)[1])
+	# Probability of the data point
+	var = C[1, 1] + data[i, 3]
+	logL += -0.5*log(2*pi*var) - 0.5*(data[i, 2] - mu[1])^2/var
+
+	# Update knowledge of signal
+	# http://math.stackexchange.com/questions/157172/product-of-two-multivariate-gaussians-distributions
+	C1inv = inv(C)
+	C2inv = [1.0/data[i,3] 0.0; 0.0 0.0]
+	C3 = inv(C1inv + C2inv)
+	mu1 = mu
+	mu2 = [data[i, 2], 0.0]
+	mu3 = C3*C1inv*mu1 + C3*C2inv*mu2
+	mu = mu3
+	C = C3
+
+	# Evolve
+	if(i != size(data)[1])
+		advance!(mu, C, data[i+1, 1] - data[i, 1])
+	end
+end
+
+println(logL)
 
