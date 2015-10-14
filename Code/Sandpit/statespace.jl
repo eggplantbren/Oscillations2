@@ -83,8 +83,6 @@ function log_likelihood(params::Vector{Float64}, data::Matrix{Float64})
 		mu = mu3
 		C = C3
 
-		plt.errorbar(data[i, 1], mu[1], yerr=sqrt(C[1,1]), fmt="ro")
-
 		# Evolve
 		if(i != size(data)[1])
 			(mu, C) = advance(mu, C, data[i+1, 1] - data[i, 1])
@@ -127,11 +125,16 @@ end
 #end
 
 
-using PyCall
-@pyimport matplotlib.pyplot as plt
 
 data = readdlm("../data.txt")
-plt.errorbar(data[:,1], data[:,2], yerr=data[:,3], fmt="bo")
-println(log_likelihood([1.0, 30.0, 2.0*pi/20.0], data))
-plt.show()
+
+function badness(params::Vector{Float64})
+	return -log_likelihood(params, data)
+end
+
+using Optim
+
+params = [1.0, 30.0, 2*pi/20.0]
+params = optimize(badness, params, method=:cg, show_trace=true).minimum
+println(params)
 
