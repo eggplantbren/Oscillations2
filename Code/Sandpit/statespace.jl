@@ -4,10 +4,10 @@ arxiv: 1102.0524
 """
 
 # Angular frequency of oscillator
-omega0 = 1.0
+omega0 = 2.0*pi/20.0
 
 # Mode lifetime
-tau = 5.0
+tau = 60.0
 
 # Amplitude
 A = 1.0
