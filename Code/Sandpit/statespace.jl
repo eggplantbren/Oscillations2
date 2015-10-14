@@ -28,14 +28,22 @@ Covariance matrix for (delta_x, delta_v) (Equations 15-17)
 """ ->
 function covariance(Dt::Float64)
 	C = Array(Float64, (2, 2))
-	C[1, 1] = D/(4*omega^2*omega0^2*tau^3)*
-					(4*omega^2*tau^2 + exp(-Dt/tau)*
-					(cos(2*omega*Dt) - 2*omega*tau*sin(2*omega*Dt) - 4*omega0^2*tau^2))
-	C[1, 2] = D/(omega^2*tau^2)*exp(-Dt/tau)*sin(omega*Dt)^2
-	C[2, 1] = C[1, 2]
-	C[2, 2] = D/(4*omega^2*tau^3)*
-					(4*omega^2*tau^2 + exp(-Dt/tau)*
-					(cos(2*omega*Dt) + 2*omega*tau*sin(2*omega*Dt) - 4*omega0^2*tau^2))
+
+	if(Dt == Inf)
+		C[1, 1] = D/(omega0^2*tau)
+		C[1, 2] = 0.0
+		C[2, 1] = 0.0
+		C[2, 2] = D/tau
+	else
+		C[1, 1] = D/(4*omega^2*omega0^2*tau^3)*
+						(4*omega^2*tau^2 + exp(-Dt/tau)*
+						(cos(2*omega*Dt) - 2*omega*tau*sin(2*omega*Dt) - 4*omega0^2*tau^2))
+		C[1, 2] = D/(omega^2*tau^2)*exp(-Dt/tau)*sin(omega*Dt)^2
+		C[2, 1] = C[1, 2]
+		C[2, 2] = D/(4*omega^2*tau^3)*
+						(4*omega^2*tau^2 + exp(-Dt/tau)*
+						(cos(2*omega*Dt) + 2*omega*tau*sin(2*omega*Dt) - 4*omega0^2*tau^2))
+	end
 	return C
 end
 
@@ -46,7 +54,7 @@ function simulate(t::Array{Float64, 1})
 	y = Array(Float64, length(t))
 
 	# Use stationary distribution for initial conditions
-	C = covariance(maximum([1000*tau, 1000*2*pi/omega0]))
+	C = covariance(Inf)
 	n = randn(2)
 	(x, v) = chol(C)'*n
 	y[1] = x
@@ -74,7 +82,7 @@ end
 using PyCall
 @pyimport matplotlib.pyplot as plt
 
-t = Array(linspace(0.0, 100.0, 1001))
+t = Array(linspace(0.0, 1000.0, 2001))
 y = simulate(t)
 plt.plot(t, y)
 plt.show()
