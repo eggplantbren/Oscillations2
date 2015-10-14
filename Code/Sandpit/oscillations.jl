@@ -20,8 +20,8 @@ function update!(state::Array{Float64, 1}, dt)
 end
 
 
-steps = 1000000
-skip = 100
+steps = 100000
+skip = 10
 dt = 0.05
 
 state = [0.0, 0.0]
@@ -35,7 +35,7 @@ for(i in 1:steps)
 
 	if(rem(i, skip) == 0)
 		keep[div(i, skip), :] = state
-		plt.plot(keep[1:div(i, skip)], "b")
+		plt.plot(keep[1:div(i, skip), 1], keep[1:div(i, skip), 2], "b")
 		plt.draw()
 		println(std(keep[1:div(i, skip)]))
 	end
