@@ -52,14 +52,14 @@ end
 Evolve uncertainty (described by mean and covariance matrix)
 for a certain duration
 """ ->
-function advance!(mu::Vector{Float64}, C::Matrix{Float64}, Dt::Float64)
+function advance(mu::Vector{Float64}, C::Matrix{Float64}, Dt::Float64)
 	# Matrix exponential (Equation 9)
 	mexp = exp(-Dt/(2*tau))*(cos(omega*Dt)*I + sin(omega*Dt)*J)
 	mu = mexp*mu # Based on Expected value of Equation 7
 
 	# Update covariance matrix
-	C = mexp*mexp*C + covariance(Dt)
-	return nothing
+	C = mexp*C*mexp' + covariance(Dt)
+	return (mu, C)
 end
 
 
@@ -114,10 +114,12 @@ for(i in 1:size(data)[1])
 	var = C[1, 1] + data[i, 3]
 	logL += -0.5*log(2*pi*var) - 0.5*(data[i, 2] - mu[1])^2/var
 
+	plt.errorbar(data[i, 1], mu[1], yerr=sqrt(C[1,1]), fmt="ro")
+
 	# Update knowledge of signal
 	# http://math.stackexchange.com/questions/157172/product-of-two-multivariate-gaussians-distributions
 	C1inv = inv(C)
-	C2inv = [1.0/data[i,3] 0.0; 0.0 0.0]
+	C2inv = [1.0/data[i,3]^2 0.0; 0.0 0.0]
 	C3 = inv(C1inv + C2inv)
 	mu1 = mu
 	mu2 = [data[i, 2], 0.0]
@@ -125,11 +127,9 @@ for(i in 1:size(data)[1])
 	mu = mu3
 	C = C3
 
-	plt.plot(data[i, 1], mu[1], "ro")
-
 	# Evolve
 	if(i != size(data)[1])
-		advance!(mu, C, data[i+1, 1] - data[i, 1])
+		(mu, C) = advance(mu, C, data[i+1, 1] - data[i, 1])
 	end
 end
 
