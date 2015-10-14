@@ -2,9 +2,12 @@ using PyCall
 @pyimport matplotlib.pyplot as plt
 
 function deriv(state::Array{Float64, 1}, dt)
+	omega = (2*pi)/3.0
+	tau = 3.1
+
 	d = copy(state)
 	d[1] = state[2]
-	d[2] = -state[1] - 0.1*state[2] + randn()/sqrt(dt)
+	d[2] = -omega^2*state[1] - 2.0/tau*state[2] + randn()/sqrt(dt)
 	return d
 end
 
@@ -20,9 +23,10 @@ function update!(state::Array{Float64, 1}, dt)
 end
 
 
-steps = 100000
+steps = 500000
 skip = 10
-dt = 0.05
+plot_skip = 100
+dt = 0.01
 
 state = [0.0, 0.0]
 
@@ -35,9 +39,25 @@ for(i in 1:steps)
 
 	if(rem(i, skip) == 0)
 		keep[div(i, skip), :] = state
-		plt.plot(keep[1:div(i, skip), 1], keep[1:div(i, skip), 2], "b")
-		plt.draw()
-		println(std(keep[1:div(i, skip)]))
+		if(rem(i, skip*plot_skip) == 0)
+			plt.plot((1:div(i, skip))*dt*skip, keep[1:div(i, skip), 1], "b")
+			plt.draw()
+		end
 	end
 end
+
+plt.ioff()
+plt.show()
+
+acf = xcorr(keep[:,1], keep[:,1])
+first = find(acf .== maximum(acf))
+acf = acf[minimum(first):end]
+acf = acf/acf[1]
+lags = (0:(length(acf)-1))*dt*skip
+plt.plot(lags,  acf, "b")
+plt.hold(true)
+omega = (2*pi)/3.0
+tau = 3.1
+plt.plot(lags, exp(-lags/tau).*cos(omega*lags), "r")
+plt.show()
 
