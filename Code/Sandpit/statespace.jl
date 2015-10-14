@@ -100,6 +100,7 @@ using PyCall
 @pyimport matplotlib.pyplot as plt
 
 data = readdlm("../data.txt")
+plt.errorbar(data[:,1], data[:,2], yerr=data[:,3], fmt="bo")
 
 # Prior state of knowledge about signal
 mu = [0.0, 0.0]
@@ -124,6 +125,8 @@ for(i in 1:size(data)[1])
 	mu = mu3
 	C = C3
 
+	plt.plot(data[i, 1], mu[1], "ro")
+
 	# Evolve
 	if(i != size(data)[1])
 		advance!(mu, C, data[i+1, 1] - data[i, 1])
@@ -131,4 +134,5 @@ for(i in 1:size(data)[1])
 end
 
 println(logL)
+plt.show()
 
