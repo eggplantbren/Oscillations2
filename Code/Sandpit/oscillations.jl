@@ -2,12 +2,12 @@ using PyCall
 @pyimport matplotlib.pyplot as plt
 
 function deriv(state::Array{Float64, 1}, dt)
-	omega = (2*pi)/3.0
-	tau = 3.1
+	omega = (2*pi)/20.0
+	tau = 30.0
 
 	d = copy(state)
 	d[1] = state[2]
-	d[2] = -omega^2*state[1] - 2.0/tau*state[2] + randn()/sqrt(dt)
+	d[2] = -omega^2*state[1] - 1.0/tau*state[2] + randn()/sqrt(dt)
 	return d
 end
 
@@ -23,10 +23,10 @@ function update!(state::Array{Float64, 1}, dt)
 end
 
 
-steps = 500000
-skip = 10
+steps = 100000
+skip = 100
 plot_skip = 100
-dt = 0.01
+dt = 0.02
 
 state = [0.0, 0.0]
 
@@ -46,18 +46,12 @@ for(i in 1:steps)
 	end
 end
 
-plt.ioff()
-plt.show()
+data = zeros((size(keep)[1], 3))
+data[:,1] = (1:size(keep)[1])*dt*skip
+data[:,2] = keep[:,1] + 1E-3*randn(size(keep)[1])
+data[:,3] = 1E-3
 
-acf = xcorr(keep[:,1], keep[:,1])
-first = find(acf .== maximum(acf))
-acf = acf[minimum(first):end]
-acf = acf/acf[1]
-lags = (0:(length(acf)-1))*dt*skip
-plt.plot(lags,  acf, "b")
-plt.hold(true)
-omega = (2*pi)/3.0
-tau = 3.1
-plt.plot(lags, exp(-lags/tau).*cos(omega*lags), "r")
+writedlm("data.txt", data)
+plt.ioff()
 plt.show()
 

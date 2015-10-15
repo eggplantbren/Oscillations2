@@ -126,7 +126,7 @@ end
 
 
 
-data = readdlm("../data.txt")
+data = readdlm("data.txt")
 
 function badness(params::Vector{Float64})
 	f = 0.0
@@ -138,9 +138,53 @@ function badness(params::Vector{Float64})
 	return f
 end
 
-using Optim
+function logl(params::Vector{Float64})
+	f = 0.0
+	try
+		f = log_likelihood(params, data)
+	catch
+		f = -Inf
+	end
+	return f
+end
 
-params = [1.0, 30.0, 2*pi/20.0]
-params = optimize(badness, params, method=:cg, show_trace=true).minimum
-println(params)
+using PyCall
+@pyimport matplotlib.pyplot as plt
+
+# Metropolis algorithm
+params = [10.0, 30.0, 2*pi/30.0]
+logL = logl(params)
+
+steps = 10000
+skip = 10
+plot_skip = 100
+keep = zeros(div(steps, skip), length(params))
+
+plt.ion()
+plt.hold(false)
+
+for(i in 1:steps)
+	L = [10.0, 10.0, 1.0]
+	proposal = copy(params)
+	which = rand(1:length(params))
+	proposal[which] += 10.0^(1.5 - 6.0*rand())*randn()
+	proposal = abs(proposal)
+	logL2 = logl(proposal)
+
+	if(rand() <= exp(logL2 - logL))
+		params = proposal
+		logL = logL2
+	end
+
+	if(rem(i, skip) == 0)
+		keep[div(i, skip), :] = params
+		if(rem(i, skip*plot_skip) == 0)
+			plt.plot(keep[1:div(i, skip), 2], "b")
+			plt.draw()
+		end
+	end
+end
+
+plt.ioff()
+plt.show()
 
