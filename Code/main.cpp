@@ -1,6 +1,6 @@
 #include <iostream>
 #include "Start.h"
-#include "MyModel.h"
+#include "StateSpace.h"
 #include "Data.h"
 
 using namespace std;
@@ -11,7 +11,7 @@ int main(int argc, char** argv)
 	// Load the data
 	Data::get_instance().load("data.txt");
 
-	MTSampler<MyModel> sampler = setup_mt<MyModel>(argc, argv);
+	MTSampler<StateSpace> sampler = setup_mt<StateSpace>(argc, argv);
 	sampler.run();
 
 	return 0;
