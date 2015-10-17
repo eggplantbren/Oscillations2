@@ -59,8 +59,7 @@ double StateSpace::logLikelihood() const
 	vector<double> omega(N);
 
 	// Some coefficients
-	vector<double> c1(N), c2(N), c3(N), c4(N);
-
+	vector<double> c1(N), c2(N), c3(N), c4(N), c5(N);
 	for(int i=0; i<N; i++)
 	{
 		omega0[i] = 2*M_PI*exp(-components[i][0]);
@@ -73,6 +72,7 @@ double StateSpace::logLikelihood() const
 		c2[i] = D[i]/pow(omega[i], 2)/pow(tau[i], 2);
 		c3[i] = D[i]/(4*pow(omega[i], 2)*pow(tau[i], 3));
 		c4[i] = 4*pow(omega[i]*tau[i], 2);
+		c5[i] = 4*pow(omega0[i]*tau[i], 2);
 	}
 
 	// State of knowledge of signal
@@ -93,7 +93,7 @@ double StateSpace::logLikelihood() const
 	}
 
 	// Declare stuff
-	double Dt, mean, var;
+	double Dt, mean, var, junk1, junk2;
 	MatrixXd C1inv(2*N, 2*N), C2inv(2*N, 2*N), C3(2*N, 2*N), mexp(2*N, 2*N);
 	VectorXd mu2(2*N);
 
@@ -111,15 +111,17 @@ double StateSpace::logLikelihood() const
 		logL += -0.5*log(2*M_PI*var) - 0.5*pow(Y[i] - mean, 2)/var;
 
 		// Update knowledge of signal at current time
+		junk1 = 1./pow(sig[i], 2);
+		junk2 = Y[i]/N/pow(sig[i], 2);
 		C1inv = C.inverse();
 		C2inv = MatrixXd::Zero(2*N, 2*N);
 		for(int j=0; j<N; j++)
-			C2inv(2*j, 2*j) = pow(sig[i], -2);
+			C2inv(2*j, 2*j) = junk1;
 		C3 = (C1inv + C2inv).inverse();
-		mu2 = VectorXd::Ones(2*N);
+		mu2 = VectorXd::Zero(2*N);
 		for(int j=0; j<N; j++)
-			mu2(2*j) = Y[i]/N;
-		mu = C3*C1inv*mu + C3*C2inv*mu2;
+			mu2(2*j) = junk2;
+		mu = C3*C1inv*mu + C3*mu2;
 		C = C3;
 
 		// Calculate knowledge of signal at next time
@@ -133,13 +135,12 @@ double StateSpace::logLikelihood() const
 			{
 				C3(2*j, 2*j) = c1[j]*
 							(c4[j] + exp(-Dt/tau[j])*
-							(cos(2*omega[j]*Dt) - 2*omega[j]*tau[j]*sin(2*omega[j]*Dt) -
-									 4*pow(omega0[j]*tau[j], 2)));
+							(cos(2*omega[j]*Dt) - 2*omega[j]*tau[j]*sin(2*omega[j]*Dt) - c5[j]));
 				C3(2*j, 2*j+1) = c2[j]*exp(-Dt/tau[j])*pow(sin(omega[j]*Dt), 2);
 				C3(2*j+1, 2*j) = C3(0, 1);
 				C3(2*j+1, 2*j+1) = c3[j]*
 							(c4[j] + exp(-Dt/tau[j])*
-							(cos(2*omega[j]*Dt) + 2*omega[j]*tau[j]*sin(2*omega[j]*Dt) - 4*pow(omega0[j]*tau[j], 2)));
+							(cos(2*omega[j]*Dt) + 2*omega[j]*tau[j]*sin(2*omega[j]*Dt) - c5[j]));
 			}
 
 			mexp = (-Dt*M).exp();
