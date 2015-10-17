@@ -73,12 +73,12 @@ double StateSpace::logLikelihood() const
 	// Declare stuff
 	double Dt, var;
 	MatrixXd C1inv(2, 2), C2inv(2, 2), C3(2, 2), mexp(2, 2);
-	VectorXd mu2(2), mu3(2);
+	VectorXd mu2(2);
 
 	for(int i=0; i<Y.size(); i++)
 	{
 		// Evaluate probability distribution for the data point
-		var = C(0, 0) + pow(extra_sigma, 2);
+		var = C(0, 0) + pow(sig[i], 2);//pow(extra_sigma, 2);
 		logL += -0.5*log(2*M_PI*var) - 0.5*pow(Y[i] - mu[0], 2)/var;
 
 		// Update knowledge of signal at current time
@@ -86,18 +86,21 @@ double StateSpace::logLikelihood() const
 		C2inv<<(1.0/pow(sig[i], 2)), 0.0, 0.0, 0.0;
 		C3 = (C1inv + C2inv).inverse();
 		mu2<<Y[i], 0.;
-		mu3 = C3*C1inv*mu + C3*C2inv*mu2;
+		mu = C3*C1inv*mu + C3*C2inv*mu2;
+		C = C3;
 
 		// Calculate knowledge of signal at next time
 		if(i != Y.size() - 1)
 		{
+			Dt = t[i+1] - t[i];
+
 			// Just reuse C3, don't need a new matrix
 			C3(0, 0) = D/(4*pow(omega*omega0, 2)*pow(tau, 3))*
 						(4*pow(omega*tau, 2) + exp(-Dt/tau)*
 						(cos(2*omega*Dt) - 2*omega*tau*sin(2*omega*Dt) -
 								 4*pow(omega0*tau, 2)));
 			C3(0, 1) = D/pow(omega, 2)/pow(tau, 2)*exp(-Dt/tau)*pow(sin(omega*Dt), 2);
-			C3(1, 0) = C(0, 1);
+			C3(1, 0) = C3(0, 1);
 			C3(1, 1) = D/(4*pow(omega, 2)*pow(tau, 3))*
 						(4*pow(omega*tau, 2) + exp(-Dt/tau)*
 						(cos(2*omega*Dt) + 2*omega*tau*sin(2*omega*Dt) - 4*pow(omega0*tau, 2)));
