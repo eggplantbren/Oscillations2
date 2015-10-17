@@ -72,7 +72,7 @@ double StateSpace::logLikelihood() const
 
 	// Declare stuff
 	double Dt, var;
-	MatrixXd C1inv(2, 2), C2inv(2, 2), C3(2, 2);
+	MatrixXd C1inv(2, 2), C2inv(2, 2), C3(2, 2), mexp(2, 2);
 	VectorXd mu2(2), mu3(2);
 
 	for(int i=0; i<Y.size(); i++)
@@ -102,11 +102,10 @@ double StateSpace::logLikelihood() const
 						(4*pow(omega*tau, 2) + exp(-Dt/tau)*
 						(cos(2*omega*Dt) + 2*omega*tau*sin(2*omega*Dt) - 4*pow(omega0*tau, 2)));
 
-			
+			mexp = exp(-0.5*Dt/tau)*(cos(omega*Dt)*I + sin(omega*Dt)*J);
+			mu = mexp*mu;
+			C = mexp*C*mexp.transpose() + C3;
 		}
-
-
-
 
 	}
 
