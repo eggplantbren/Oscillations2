@@ -57,6 +57,10 @@ double StateSpace::logLikelihood() const
 	vector<double> tau(N);
 	vector<double> D(N);
 	vector<double> omega(N);
+
+	// Some coefficients
+	vector<double> c1(N), c2(N), c3(N), c4(N);
+
 	for(int i=0; i<N; i++)
 	{
 		omega0[i] = 2*M_PI*exp(-components[i][0]);
@@ -64,6 +68,11 @@ double StateSpace::logLikelihood() const
 		tau[i] = components[i][2]*exp(components[i][0]);
 		D[i] = A[i]*A[i]*omega0[i]*omega0[i]*tau[i];
 		omega[i] = sqrt(omega0[i]*omega0[i] - 1.0/(4*tau[i]*tau[i]));
+
+		c1[i] = D[i]/(4*pow(omega[i]*omega0[i], 2)*pow(tau[i], 3));
+		c2[i] = D[i]/pow(omega[i], 2)/pow(tau[i], 2);
+		c3[i] = D[i]/(4*pow(omega[i], 2)*pow(tau[i], 3));
+		c4[i] = 4*pow(omega[i]*tau[i], 2);
 	}
 
 	// State of knowledge of signal
@@ -122,14 +131,14 @@ double StateSpace::logLikelihood() const
 			C3 = MatrixXd::Zero(2*N, 2*N);
 			for(int j=0; j<N; j++)
 			{
-				C3(2*j, 2*j) = D[j]/(4*pow(omega[j]*omega0[j], 2)*pow(tau[j], 3))*
-							(4*pow(omega[j]*tau[j], 2) + exp(-Dt/tau[j])*
+				C3(2*j, 2*j) = c1[j]*
+							(c4[j] + exp(-Dt/tau[j])*
 							(cos(2*omega[j]*Dt) - 2*omega[j]*tau[j]*sin(2*omega[j]*Dt) -
 									 4*pow(omega0[j]*tau[j], 2)));
-				C3(2*j, 2*j+1) = D[j]/pow(omega[j], 2)/pow(tau[j], 2)*exp(-Dt/tau[j])*pow(sin(omega[j]*Dt), 2);
+				C3(2*j, 2*j+1) = c2[j]*exp(-Dt/tau[j])*pow(sin(omega[j]*Dt), 2);
 				C3(2*j+1, 2*j) = C3(0, 1);
-				C3(2*j+1, 2*j+1) = D[j]/(4*pow(omega[j], 2)*pow(tau[j], 3))*
-							(4*pow(omega[j]*tau[j], 2) + exp(-Dt/tau[j])*
+				C3(2*j+1, 2*j+1) = c3[j]*
+							(c4[j] + exp(-Dt/tau[j])*
 							(cos(2*omega[j]*Dt) + 2*omega[j]*tau[j]*sin(2*omega[j]*Dt) - 4*pow(omega0[j]*tau[j], 2)));
 			}
 
