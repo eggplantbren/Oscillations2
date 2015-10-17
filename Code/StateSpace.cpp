@@ -71,20 +71,13 @@ double StateSpace::logLikelihood() const
 	VectorXd mu = VectorXd::Zero(2*N);
 	MatrixXd C = MatrixXd::Zero(2*N, 2*N);
 
-	// The matrices M, I, and J
+	// The matrix M
 	MatrixXd M = MatrixXd::Zero(2*N, 2*N);
-	MatrixXd I = MatrixXd::Identity(2*N, 2*N);
-	MatrixXd J = MatrixXd::Zero(2*N, 2*N);
 	for(int i=0; i<N; i++)
 	{
 		M(2*i, 2*i+1) = -1.;
 		M(2*i+1, 2*i) = pow(omega0[i], 2);
 		M(2*i+1, 2*i+1) = 1./tau[i];
-
-		J(2*i, 2*i) = 1./(2*omega[i]*tau[i]);
-		J(2*i, 2*i+1) = -1./omega[i];
-		J(2*i+1, 2*i) = -pow(omega0[i], 2)/omega[i];
-		J(2*i+1, 2*i+1) = -1./(2*omega[i]*tau[i]);
 
 		C(2*i, 2*i) = D[i]/pow(omega0[i], 2)/tau[i];
 		C(2*i+1, 2*i+1) = D[i]/tau[i];
