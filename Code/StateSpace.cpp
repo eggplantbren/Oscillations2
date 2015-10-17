@@ -44,6 +44,7 @@ double StateSpace::logLikelihood() const
 	// Get the data
 	const vector<double>& t = Data::get_instance().get_t();
 	const VectorXd& Y = Data::get_instance().get_y_eigen();
+	const vector<double>& sig = Data::get_instance().get_sig();
 
 	// Get the modes
 	const vector< vector<double> >& components = objects.get_components();
@@ -64,28 +65,48 @@ double StateSpace::logLikelihood() const
 	// State of knowledge of signal
 	VectorXd mu = VectorXd::Zero(2);
 	MatrixXd C(2, 2);
+	C(0, 0) = D/pow(omega0, 2)/tau;
+	C(0, 1) = 0.;
+	C(1, 0) = 0.;
+	C(1, 1) = D/tau;
 
-	double Dt;
-	double var = A*A;
+	// Declare stuff
+	double Dt, var;
+	MatrixXd C1inv(2, 2), C2inv(2, 2), C3(2, 2);
+	VectorXd mu2(2), mu3(2);
+
 	for(int i=0; i<Y.size(); i++)
 	{
-		// Probability distribution for the data point given the signal
-		var += pow(extra_sigma, 2);
+		// Evaluate probability distribution for the data point
+		var = C(0, 0) + pow(extra_sigma, 2);
 		logL += -0.5*log(2*M_PI*var) - 0.5*pow(Y[i] - mu[0], 2)/var;
 
-		// Time to next data point
-		Dt = t[i+1] - t[i];
+		// Update knowledge of signal at current time
+		C1inv = C.inverse();
+		C2inv<<(1.0/pow(sig[i], 2)), 0.0, 0.0, 0.0;
+		C3 = (C1inv + C2inv).inverse();
+		mu2<<Y[i], 0.;
+		mu3 = C3*C1inv*mu + C3*C2inv*mu2;
 
-		// Update C and mu
-		C(0, 0) = D/(4*pow(omega*omega0, 2)*pow(tau, 3))*
-					(4*pow(omega*tau, 2) + exp(-Dt/tau)*
-					(cos(2*omega*Dt) - 2*omega*tau*sin(2*omega*Dt) -
-							 4*pow(omega0*tau, 2)));
-		C(0, 1) = D/pow(omega, 2)/pow(tau, 2)*exp(-Dt/tau)*pow(sin(omega*Dt), 2);
-		C(1, 0) = C(0, 1);
-		C(1, 1) = D/(4*pow(omega, 2)*pow(tau, 3))*
-					(4*pow(omega*tau, 2) + exp(-Dt/tau)*
-					(cos(2*omega*Dt) + 2*omega*tau*sin(2*omega*Dt) - 4*pow(omega0*tau, 2)));
+		// Calculate knowledge of signal at next time
+		if(i != Y.size() - 1)
+		{
+			// Just reuse C3, don't need a new matrix
+			C3(0, 0) = D/(4*pow(omega*omega0, 2)*pow(tau, 3))*
+						(4*pow(omega*tau, 2) + exp(-Dt/tau)*
+						(cos(2*omega*Dt) - 2*omega*tau*sin(2*omega*Dt) -
+								 4*pow(omega0*tau, 2)));
+			C3(0, 1) = D/pow(omega, 2)/pow(tau, 2)*exp(-Dt/tau)*pow(sin(omega*Dt), 2);
+			C3(1, 0) = C(0, 1);
+			C3(1, 1) = D/(4*pow(omega, 2)*pow(tau, 3))*
+						(4*pow(omega*tau, 2) + exp(-Dt/tau)*
+						(cos(2*omega*Dt) + 2*omega*tau*sin(2*omega*Dt) - 4*pow(omega0*tau, 2)));
+
+			
+		}
+
+
+
 
 	}
 
