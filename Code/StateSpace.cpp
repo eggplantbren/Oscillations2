@@ -93,8 +93,8 @@ double StateSpace::logLikelihood() const
 	}
 
 	// Declare stuff
-	double Dt, mean, var, junk1, junk2;
-	MatrixXd C1inv(2*N, 2*N), C2inv(2*N, 2*N), C3(2*N, 2*N), mexp(2*N, 2*N);
+	double Dt, mean, var, junk1, junk2, junk3, junk4;
+	MatrixXd C1inv(2*N, 2*N), C2inv(2*N, 2*N), mexp(2*N, 2*N);
 	VectorXd mu2(2*N);
 
 	for(int i=0; i<Y.size(); i++)
@@ -117,35 +117,32 @@ double StateSpace::logLikelihood() const
 		C2inv = MatrixXd::Zero(2*N, 2*N);
 		for(int j=0; j<N; j++)
 			C2inv(2*j, 2*j) = junk1;
-		C3 = (C1inv + C2inv).inverse();
+		C = (C1inv + C2inv).inverse();
 		mu2 = VectorXd::Zero(2*N);
 		for(int j=0; j<N; j++)
 			mu2(2*j) = junk2;
-		mu = C3*C1inv*mu + C3*mu2;
-		C = C3;
+		mu = C*C1inv*mu + C*mu2;
 
 		// Calculate knowledge of signal at next time
 		if(i != Y.size() - 1)
 		{
 			Dt = t[i+1] - t[i];
 
-			// Just reuse C3, don't need a new matrix
-			C3 = MatrixXd::Zero(2*N, 2*N);
-			for(int j=0; j<N; j++)
-			{
-				C3(2*j, 2*j) = c1[j]*
-							(c4[j] + exp(-Dt/tau[j])*
-							(cos(2*omega[j]*Dt) - 2*omega[j]*tau[j]*sin(2*omega[j]*Dt) - c5[j]));
-				C3(2*j, 2*j+1) = c2[j]*exp(-Dt/tau[j])*pow(sin(omega[j]*Dt), 2);
-				C3(2*j+1, 2*j) = C3(0, 1);
-				C3(2*j+1, 2*j+1) = c3[j]*
-							(c4[j] + exp(-Dt/tau[j])*
-							(cos(2*omega[j]*Dt) + 2*omega[j]*tau[j]*sin(2*omega[j]*Dt) - c5[j]));
-			}
-
 			mexp = (-Dt*M).exp();
 			mu = mexp*mu;
-			C = mexp*C*mexp.transpose() + C3;
+			C = mexp*C*mexp.transpose();
+
+			// Just reuse C3, don't need a new matrix
+			for(int j=0; j<N; j++)
+			{
+				C(2*j, 2*j) += c1[j]*(c4[j] + exp(-Dt/tau[j])*
+									(cos(2*omega[j]*Dt) - 2*omega[j]*tau[j]*sin(2*omega[j]*Dt) - c5[j]));
+				junk3 = c2[j]*exp(-Dt/tau[j])*pow(sin(omega[j]*Dt), 2);
+				C(2*j, 2*j+1) += junk3;
+				C(2*j+1, 2*j) += junk3;
+				C(2*j+1, 2*j+1) += c3[j]*(c4[j] + exp(-Dt/tau[j])*
+							(cos(2*omega[j]*Dt) + 2*omega[j]*tau[j]*sin(2*omega[j]*Dt) - c5[j]));
+			}
 		}
 
 	}
