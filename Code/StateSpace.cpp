@@ -42,6 +42,7 @@ double StateSpace::logLikelihood() const
 	double logL = 0.;
 
 	// Get the data
+	const vector<double>& t = Data::get_instance().get_t();
 	const VectorXd& Y = Data::get_instance().get_y_eigen();
 
 	// Get the modes
@@ -60,6 +61,10 @@ double StateSpace::logLikelihood() const
 	I<<1.0, 0.0, 0.0, 1.0;
 	J<<1.0/(2*omega*tau), 1.0/omega, -omega0*omega0/omega, -1.0/(2*omega*tau);
 
+	// State of knowledge of signal
+	VectorXd mu = VectorXd::Zero(2);
+	MatrixXd C(2, 2);
+
 	double Dt;
 	double var = A*A;
 	for(int i=0; i<Y.size(); i++)
@@ -75,12 +80,12 @@ double StateSpace::logLikelihood() const
 		C(0, 0) = D/(4*pow(omega*omega0, 2)*pow(tau, 3))*
 					(4*pow(omega*tau, 2) + exp(-Dt/tau)*
 					(cos(2*omega*Dt) - 2*omega*tau*sin(2*omega*Dt) -
-							 4*pow(omega0*tau, 2));
-//	C[1, 2] = D/(omega^2*tau^2)*exp(-Dt/tau)*sin(omega*Dt)^2
-//	C[2, 1] = C[1, 2]
-//	C[2, 2] = D/(4*omega^2*tau^3)*
-//					(4*omega^2*tau^2 + exp(-Dt/tau)*
-//					(cos(2*omega*Dt) + 2*omega*tau*sin(2*omega*Dt) - 4*omega0^2*tau^2))
+							 4*pow(omega0*tau, 2)));
+		C(0, 1) = D/pow(omega, 2)/pow(tau, 2)*exp(-Dt/tau)*pow(sin(omega*Dt), 2);
+		C(1, 0) = C(0, 1);
+		C(1, 1) = D/(4*pow(omega, 2)*pow(tau, 3))*
+					(4*pow(omega*tau, 2) + exp(-Dt/tau)*
+					(cos(2*omega*Dt) + 2*omega*tau*sin(2*omega*Dt) - 4*pow(omega0*tau, 2)));
 
 	}
 
