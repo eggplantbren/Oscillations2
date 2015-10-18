@@ -107,12 +107,12 @@ double StateSpace::logLikelihood() const
 			mean += mu(2*j);
 			var += C(2*j, 2*j);
 		}
-		var += pow(sig[i], 2);
+		var += pow(extra_sigma, 2) + pow(sig[i], 2);
 		logL += -0.5*log(2*M_PI*var) - 0.5*pow(Y[i] - mean, 2)/var;
 
 		// Update knowledge of signal at current time
-		junk1 = 1./pow(sig[i], 2);
-		junk2 = Y[i]/N/pow(sig[i], 2);
+		junk1 = 1./(pow(extra_sigma, 2) + pow(sig[i], 2));
+		junk2 = Y[i]/N/(pow(extra_sigma, 2) + pow(sig[i], 2));
 		C1inv = C.inverse();
 		C2inv = MatrixXd::Zero(2*N, 2*N);
 		for(int j=0; j<N; j++)
