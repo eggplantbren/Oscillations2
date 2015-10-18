@@ -11,7 +11,7 @@ using namespace DNest3;
 using namespace Eigen;
 
 StateSpace::StateSpace()
-:objects(3, 1, true, MyDistribution())
+:objects(3, 10, false, MyDistribution())
 {
 
 }
@@ -50,6 +50,18 @@ double StateSpace::logLikelihood() const
 	// Get the modes
 	const vector< vector<double> >& components = objects.get_components();
 	int N = components.size();
+
+	double var;
+	// Handle special case N=0
+	if(N == 0)
+	{
+		for(int i=0; i<Y.size(); i++)
+		{
+			var = pow(extra_sigma, 2) + pow(sig[i], 2);
+			logL += -0.5*log(2*M_PI*var) - 0.5*pow(Y[i], 2)/var;
+		}
+		return logL;
+	}
 
 	// Mode parameters
 	vector<double> omega0(N);
@@ -93,7 +105,7 @@ double StateSpace::logLikelihood() const
 	}
 
 	// Declare stuff
-	double Dt, mean, var, junk1, junk2, junk3, junk4;
+	double Dt, mean, junk1, junk2, junk3, junk4;
 	MatrixXd C1inv(2*N, 2*N), C2inv(2*N, 2*N), mexp(2*N, 2*N);
 	VectorXd mu2(2*N);
 
