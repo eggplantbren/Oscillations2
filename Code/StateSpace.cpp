@@ -4,7 +4,6 @@
 #include "Data.h"
 #include <cmath>
 #include <Eigen/Dense>
-#include <unsupported/Eigen/MatrixFunctions>
 
 using namespace std;
 using namespace DNest3;
@@ -92,13 +91,21 @@ double StateSpace::logLikelihood() const
 	VectorXd mu = VectorXd::Zero(2*N);
 	MatrixXd C = MatrixXd::Zero(2*N, 2*N);
 
-	// The matrix M
+	// The matrices M, I, and J
 	MatrixXd M = MatrixXd::Zero(2*N, 2*N);
+	MatrixXd I = MatrixXd::Identity(2*N, 2*N);
+	MatrixXd J = MatrixXd::Zero(2*N, 2*N);
+
 	for(int i=0; i<N; i++)
 	{
 		M(2*i, 2*i+1) = -1.;
 		M(2*i+1, 2*i) = pow(omega0[i], 2);
 		M(2*i+1, 2*i+1) = 1./tau[i];
+
+		J(2*i, 2*i) = 1./(2*omega[i]*tau[i]);
+		J(2*i, 2*i+1) = 1./omega[i];
+		J(2*i+1, 2*i) = -pow(omega0[i], 2)/omega[i];
+		J(2*i+1, 2*i+1) = -1./(2*omega[i]*tau[i]);
 
 		C(2*i, 2*i) = D[i]/pow(omega0[i], 2)/tau[i];
 		C(2*i+1, 2*i+1) = D[i]/tau[i];
@@ -140,7 +147,13 @@ double StateSpace::logLikelihood() const
 		{
 			Dt = t[i+1] - t[i];
 
-			mexp = (-Dt*M).exp();
+			mexp = MatrixXd::Zero(2*N, 2*N);
+			for(int j=0; j<N; j++)
+			{
+				mexp.block<2, 2>(2*j, 2*j) = exp(-Dt/(2*tau[j]))*
+									(cos(omega[j]*Dt)*I.block<2, 2>(2*j, 2*j) + sin(omega[j]*Dt)*J.block<2, 2>(2*j, 2*j));
+			}
+
 			mu = mexp*mu;
 			C = mexp*C*mexp.transpose();
 
