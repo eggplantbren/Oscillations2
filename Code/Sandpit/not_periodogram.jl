@@ -1,6 +1,11 @@
 
 using Optim
 
+function fast_inv(A::Matrix{Float64})
+	result = [A[2, 2] -A[1, 2]; -A[2, 1] A[1, 1]]/(A[1, 1]*A[2, 2] - A[1, 2]*A[2, 1])
+
+end
+
 """
 Code implementing the analytic solution given by
 arxiv: 1102.0524
@@ -34,14 +39,19 @@ function log_likelihood(params::Vector{Float64}, data::Matrix{Float64})
 			C[2, 1] = 0.0
 			C[2, 2] = D/tau
 		else
-			C[1, 1] = D/(4*omega^2*omega0^2*tau^3)*
-							(4*omega^2*tau^2 + exp(-Dt/tau)*
-							(cos(2*omega*Dt) - 2*omega*tau*sin(2*omega*Dt) - 4*omega0^2*tau^2))
-			C[1, 2] = D/(omega^2*tau^2)*exp(-Dt/tau)*sin(omega*Dt)^2
+			o2tau2 = omega^2*tau^2
+			decay = exp(-Dt/tau)
+			cc = cos(2*omega*Dt)
+			ss = 2*omega*tau*sin(2*omega*Dt)
+			ff = 4*omega0^2*tau^2
+			C[1, 1] = D/(4*o2tau2*omega0^2*tau)*
+							(4*o2tau2 + decay*
+							(cc - ss - ff))
+			C[1, 2] = D/(o2tau2)*decay*sin(omega*Dt)^2
 			C[2, 1] = C[1, 2]
-			C[2, 2] = D/(4*omega^2*tau^3)*
-							(4*omega^2*tau^2 + exp(-Dt/tau)*
-							(cos(2*omega*Dt) + 2*omega*tau*sin(2*omega*Dt) - 4*omega0^2*tau^2))
+			C[2, 2] = D/(4*o2tau2*tau)*
+							(4*o2tau2 + decay*
+							(cc + ss - ff))
 		end
 		return C
 	end
@@ -70,7 +80,7 @@ function log_likelihood(params::Vector{Float64}, data::Matrix{Float64})
 
 	# Log likelihood
 	logL = 0.
-
+	
 	for(i in 1:size(data)[1])
 		# Probability of the data point
 		var = C[1, 1] + data[i, 3]^2
@@ -78,9 +88,9 @@ function log_likelihood(params::Vector{Float64}, data::Matrix{Float64})
 
 		# Update knowledge of signal
 		# http://math.stackexchange.com/questions/157172/product-of-two-multivariate-gaussians-distributions
-		C1inv = inv(C)
+		C1inv = fast_inv(C)
 		C2inv = [1.0/data[i,3]^2 0.0; 0.0 0.0]
-		C3 = inv(C1inv + C2inv)
+		C3 = fast_inv(C1inv + C2inv)
 		mu1 = mu
 		mu2 = [data[i, 2], 0.0]
 		mu3 = C3*C1inv*mu1 + C3*C2inv*mu2
@@ -112,8 +122,8 @@ function fit_mode(freq::Float64, data::Matrix{Float64}, A_init::Float64)
 		return badness(vcat(params, freq), data)
 	end
 
-	params = [A_init, 10.0]
-	result = optimize(badness2, params, method=:cg, ftol=0.01)
+	params = [A_init, 100.0]
+	result = optimize(badness2, params, ftol=0.000001)
 	return vcat(result.minimum, result.f_minimum)
 end
 
@@ -122,10 +132,10 @@ function power(freq::Float64, data::Matrix{Float64})
 	A = 0.
 	B = 0.
 	for(i in 1:size(data)[1])
-		A += data[i, 2]*sin(2*pi*freq*data[i, 1])/data[i, 3]^2
-		B += data[i, 2]*cos(2*pi*freq*data[i, 1])/data[i, 3]^2
+		A += data[i, 2]*sin(2*pi*freq*data[i, 1])#/data[i, 3]^2
+		B += data[i, 2]*cos(2*pi*freq*data[i, 1])#/data[i, 3]^2
 	end
-	return (A^2 + B^2)/sum(1./data[:,3].^2)
+	return (A^2 + B^2)*4/size(data)[1]^2#/sum(1./data[:,3].^2)*4/size(data)[1]^2
 end
 
 # Compute the periodogram over the given frequency range
@@ -160,7 +170,7 @@ function not_periodogram(freq_min::Float64, freq_max::Float64,
 	for(i in 1:N)
 		freq[i] = freq_min + (i-1)*df
 		result = fit_mode(freq[i], data, sqrt(pgram_init[i]))
-		pgram[i] = result[1]^2
+		pgram[i] = result[1]
 		logl[i] = -result[3]
 		plt.plot(freq[1:i], pgram[1:i])
 		plt.draw()
@@ -180,13 +190,16 @@ using PyCall
 @pyimport matplotlib.pyplot as plt
 
 # Load the data and plot the periodogrm
-data = readdlm("mode1.txt")
+data = readdlm("sine.txt")
 
-nu_min = 0.75
-nu_max = 1.25
-N = 101
+nu_min = 0.95
+nu_max = 1.05
+N = 501
 
 (freq, pgram_init) = periodogram(nu_min, nu_max, data, N)
+plt.plot(freq, sqrt(pgram_init))
+plt.show()
+
 (freq, pgram, logl) = not_periodogram(nu_min, nu_max, data, pgram_init, N)
 
 plt.plot(freq, logl)
