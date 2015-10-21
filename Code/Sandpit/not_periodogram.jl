@@ -107,19 +107,48 @@ function badness(params::Vector{Float64}, data::Matrix{Float64})
 end
 
 # Fit mode at the given frequency
-function fit_mode(freq::Float64, data::Matrix{Float64})
+function fit_mode(freq::Float64, data::Matrix{Float64}, A_init::Float64)
 	function badness2(params::Vector{Float64})
 		return badness(vcat(params, freq), data)
 	end
 
-	params = [1.0, 10.0]
+	params = [A_init, 10.0]
 	result = optimize(badness2, params, method=:cg, ftol=0.01)
 	return vcat(result.minimum, result.f_minimum)
 end
 
-# Compute the "periodogram" over the given frequency range
+# Compute the 'power' at a given frequency
+function power(freq::Float64, data::Matrix{Float64})
+	A = 0.
+	B = 0.
+	for(i in 1:size(data)[1])
+		A += data[i, 2]*sin(2*pi*freq*data[i, 1])/data[i, 3]^2
+		B += data[i, 2]*cos(2*pi*freq*data[i, 1])/data[i, 3]^2
+	end
+	return (A^2 + B^2)/sum(1./data[:,3].^2)
+end
+
+# Compute the periodogram over the given frequency range
 function periodogram(freq_min::Float64, freq_max::Float64,
-							data::Matrix{Float64}; N::Int64=1000)
+							data::Matrix{Float64}, N::Int64=1000)
+	# Frequency spacing
+	df = (freq_max - freq_min)/(N - 1)
+
+	freq = Array(Float64, (N, ))
+	pgram = Array(Float64, (N, ))
+	for(i in 1:N)
+		freq[i] = freq_min + (i-1)*df
+		pgram[i] = power(freq[i], data)
+	end
+
+	return (freq, pgram)
+end
+
+
+# Compute the "periodogram" over the given frequency range
+function not_periodogram(freq_min::Float64, freq_max::Float64,
+							data::Matrix{Float64},
+							pgram_init::Vector{Float64}, N::Int64=1000)
 	# Frequency spacing
 	df = (freq_max - freq_min)/(N - 1)
 
@@ -130,7 +159,7 @@ function periodogram(freq_min::Float64, freq_max::Float64,
 	logl = Array(Float64, (N, ))
 	for(i in 1:N)
 		freq[i] = freq_min + (i-1)*df
-		result = fit_mode(freq[i], data)
+		result = fit_mode(freq[i], data, sqrt(pgram_init[i]))
 		pgram[i] = result[1]^2
 		logl[i] = -result[3]
 		plt.plot(freq[1:i], pgram[1:i])
@@ -151,15 +180,15 @@ using PyCall
 @pyimport matplotlib.pyplot as plt
 
 # Load the data and plot the periodogrm
-data = readdlm("two_modes.txt")
+data = readdlm("mode1.txt")
 
-(freq, pgram, logl) = periodogram(0.5, 3.0, data, N=101)
+nu_min = 0.75
+nu_max = 1.25
+N = 101
 
-plt.plot(freq, pgram)
-plt.xlabel("Frequency")
-plt.show()
+(freq, pgram_init) = periodogram(nu_min, nu_max, data, N)
+(freq, pgram, logl) = not_periodogram(nu_min, nu_max, data, pgram_init, N)
 
 plt.plot(freq, logl)
 plt.show()
-
 
