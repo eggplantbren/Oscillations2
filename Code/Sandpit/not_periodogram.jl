@@ -178,7 +178,7 @@ function not_periodogram(freq_min::Float64, freq_max::Float64,
 	for(i in 1:N)
 		freq[i] = freq_min + (i-1)*df
 		result = fit_mode(freq[i], data, sqrt(pgram_init[i]))
-		pgram[i] = result[1:2]
+		pgram[i, :] = result[1:2]
 		logl[i] = -result[3]
 		plt.plot(freq[1:i], exp(logl[1:i] - maximum(logl[1:i])))
 		plt.draw()
@@ -198,7 +198,7 @@ using PyCall
 @pyimport matplotlib.pyplot as plt
 
 # Load the data and plot the periodogrm
-data = readdlm("mode1.txt")
+data = readdlm("two_modes.txt")
 
 nu_min = 0.5
 nu_max = 1.5
