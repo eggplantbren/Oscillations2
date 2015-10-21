@@ -3,7 +3,10 @@ using Optim
 
 function fast_inv(A::Matrix{Float64})
 	result = [A[2, 2] -A[1, 2]; -A[2, 1] A[1, 1]]/(A[1, 1]*A[2, 2] - A[1, 2]*A[2, 1])
+end
 
+function fast_multiplication(A::Matrix{Float64}, b::Matrix{Float64})
+	return [A[1,1]*b[1] + A[1,2]*b[2]; A[2,1]*b[1] + A[2,2]*b[2]]
 end
 
 """
@@ -108,6 +111,11 @@ end
 
 function badness(params::Vector{Float64}, data::Matrix{Float64})
 	f = 0.0
+
+	if(any(params .< 0.0))
+		return Inf
+	end
+
 	try
 		f = -log_likelihood(params, data)
 	catch
@@ -122,8 +130,8 @@ function fit_mode(freq::Float64, data::Matrix{Float64}, A_init::Float64)
 		return badness(vcat(params, freq), data)
 	end
 
-	params = [A_init, 100.0]
-	result = optimize(badness2, params, ftol=0.000001)
+	params = [0.1, 10.0]
+	result = optimize(badness2, params, ftol=0.001)
 	return vcat(result.minimum, result.f_minimum)
 end
 
@@ -165,14 +173,14 @@ function not_periodogram(freq_min::Float64, freq_max::Float64,
 	plt.ion()
 	plt.hold(false)
 	freq = Array(Float64, (N, ))
-	pgram = Array(Float64, (N, ))
+	pgram = Array(Float64, (N, 2))
 	logl = Array(Float64, (N, ))
 	for(i in 1:N)
 		freq[i] = freq_min + (i-1)*df
 		result = fit_mode(freq[i], data, sqrt(pgram_init[i]))
-		pgram[i] = result[1]
+		pgram[i] = result[1:2]
 		logl[i] = -result[3]
-		plt.plot(freq[1:i], pgram[1:i])
+		plt.plot(freq[1:i], exp(logl[1:i] - maximum(logl[1:i])))
 		plt.draw()
 	end
 	plt.ioff()
@@ -190,11 +198,11 @@ using PyCall
 @pyimport matplotlib.pyplot as plt
 
 # Load the data and plot the periodogrm
-data = readdlm("sine.txt")
+data = readdlm("mode1.txt")
 
-nu_min = 0.95
-nu_max = 1.05
-N = 501
+nu_min = 0.5
+nu_max = 1.5
+N = 101
 
 (freq, pgram_init) = periodogram(nu_min, nu_max, data, N)
 plt.plot(freq, sqrt(pgram_init))
@@ -202,6 +210,6 @@ plt.show()
 
 (freq, pgram, logl) = not_periodogram(nu_min, nu_max, data, pgram_init, N)
 
-plt.plot(freq, logl)
+plt.plot(freq, exp(logl-max(logl))
 plt.show()
 
