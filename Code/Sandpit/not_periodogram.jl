@@ -93,8 +93,6 @@ function log_likelihood(params::Vector{Float64}, data::Matrix{Float64})
 		end
 	end
 
-	println(logL)
-
 	return logL
 end
 
@@ -125,6 +123,8 @@ function periodogram(freq_min::Float64, freq_max::Float64,
 	# Frequency spacing
 	df = (freq_max - freq_min)/(N - 1)
 
+	plt.ion()
+	plt.hold(false)
 	freq = Array(Float64, (N, ))
 	pgram = Array(Float64, (N, ))
 	logl = Array(Float64, (N, ))
@@ -133,8 +133,11 @@ function periodogram(freq_min::Float64, freq_max::Float64,
 		result = fit_mode(freq[i], data)
 		pgram[i] = result[1]^2
 		logl[i] = -result[3]
-		println("Done ", i, "/", N)
+		plt.plot(freq[1:i], pgram[1:i])
+		plt.draw()
 	end
+	plt.ioff()
+	plt.show()
 
 	return (freq, pgram, logl)
 end
