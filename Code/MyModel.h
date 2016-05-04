@@ -3,13 +3,21 @@
 
 #include "DNest4/code/DNest4.h"
 #include "MyConditionalPrior.h"
+#include "Data.h"
 #include <ostream>
+#include <Eigen/Dense>
 
 class MyModel
 {
 	private:
         DNest4::RJObject<MyConditionalPrior> modes;
         double mode_lifetime;
+
+        // Covariance matrix
+        Eigen::MatrixXd C;
+        void calculate_C();
+
+        static const Data& data;
 
 	public:
 		// Constructor only gives size of params
