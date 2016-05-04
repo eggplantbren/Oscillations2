@@ -8,7 +8,8 @@
 class MyModel
 {
 	private:
-
+        DNest4::RJObject<MyConditionalPrior> modes;
+        double mode_lifetime;
 
 	public:
 		// Constructor only gives size of params

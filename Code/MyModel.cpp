@@ -5,6 +5,9 @@ using namespace std;
 using namespace DNest4;
 
 MyModel::MyModel()
+:modes(2, 100, false,
+        MyConditionalPrior(0.0, 200.0),
+        PriorType::log_uniform)
 {
 
 }
