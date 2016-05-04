@@ -8,7 +8,7 @@ using namespace DNest4;
 int main(int argc, char** argv)
 {
 	// Load the data
-	Data::get_instance().load("data.txt");
+	Data::get_instance().load("xihya.txt");
 	DNest4::start<MyModel>(argc, argv);
 	return 0;
 }

@@ -11,7 +11,7 @@ const Data& MyModel::data = Data::get_instance();
 
 MyModel::MyModel()
 :modes(2, 100, false,
-        MyConditionalPrior(0.0, 200.0),
+        MyConditionalPrior(0.0, 200E-6),
         PriorType::log_uniform)
 ,C(data.get_y().size(), data.get_y().size())
 {
@@ -22,7 +22,7 @@ void MyModel::from_prior(RNG& rng)
 {
     modes.from_prior(rng);
 
-    Cauchy c;
+    Cauchy c(log(1E5), 1.0);
     mode_lifetime = exp(c.generate(rng));
 
     calculate_C();
@@ -32,14 +32,13 @@ double MyModel::perturb(RNG& rng)
 {
 	double logH = 0.0;
 
-    int which = rng.rand_int(2);
-    if(which == 0)
+    if(rng.rand() <= 0.7)
     {
         logH += modes.perturb(rng);
     }
     else
     {
-        Cauchy c;
+        Cauchy c(log(1E5), 1.0);
         mode_lifetime = log(mode_lifetime);
         logH += c.perturb(mode_lifetime, rng);
         mode_lifetime = exp(mode_lifetime);
@@ -79,7 +78,7 @@ void MyModel::calculate_C()
     double dt;
     for(int i=0; i<C.rows(); ++i)
     {
-        for(int j=(i+1); j<C.cols(); ++j)
+        for(int j=i; j<C.cols(); ++j)
         {
             dt = std::abs(t[i] - t[j]);
 
@@ -88,7 +87,8 @@ void MyModel::calculate_C()
                 C(i, j) += pow(A[k], 2)*cos(2*M_PI*f[k]*dt)
                                                         *exp(-dt/mode_lifetime);
             }
-            C(j, i) = C(i, j);
+            if(i != j)
+                C(j, i) = C(i, j);
         }
     }
 
