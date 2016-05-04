@@ -1,10 +1,13 @@
-CFLAGS = -O3
-LIBS =  -lrjobject -ldnest3 -lgsl -lgslcblas -lboost_system -lboost_thread
-OBJECTS = Data.o MyDistribution.o MyModel.o NotPeriodogram.o ODE.o StateSpace.o
+# Put the directory above 'DNest4' into an environment variable
+# called DNEST4_PATH for this to work.
+
+CC = g++
+CXXFLAGS = -std=c++11 -O3 -Wall -Wextra -pedantic -DNDEBUG
+LIBS = -ldnest4 -lpthread
+EIGEN_PATH = /usr/include/eigen3
 
 default:
-	g++ $(CFLAGS) -I/home/brendon/Projects/Forks/HODLR/header -c *.cpp
-	g++ -o main main.o $(OBJECTS) $(LIBS)
-	g++ -o test_ODE test_ODE.o $(OBJECTS) $(LIBS)
-	rm -f *.o
+	$(CC) -I$(DNEST4_PATH) -I$(EIGEN_PATH) $(CXXFLAGS) -c Data.cpp MyConditionalPrior.cpp MyModel.cpp
+#	$(CC) -L$(DNEST4_PATH)/DNest4/code -o main *.o $(LIBS)
+#	rm *.o
 

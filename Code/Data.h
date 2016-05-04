@@ -1,8 +1,8 @@
-#ifndef _Data_
-#define _Data_
+#ifndef Oscillations2_Data
+#define Oscillations2_Data
 
 #include <vector>
-#include <Eigen/Dense>
+#include "Eigen/Dense"
 
 class Data
 {
