@@ -59,12 +59,12 @@ void MyModel::calculate_C()
 	const auto& components = modes.get_components();
 
 	// Zero
-    for(int i=0; i<C.size(); ++i)
-        for(int j=0; j<C.size(); ++j)
+    for(int i=0; i<C.rows(); ++i)
+        for(int j=0; j<C.cols(); ++j)
             C(i, j) = 0.0;
 
     // Error bars
-    for(int i=0; i<C.size(); ++i)
+    for(int i=0; i<C.rows(); ++i)
         C(i, i) += pow(sig[i], 2);
 
     // Extract frequencies and amplitudes
@@ -77,9 +77,9 @@ void MyModel::calculate_C()
     }
 
     double dt;
-    for(int i=0; i<C.size(); ++i)
+    for(int i=0; i<C.rows(); ++i)
     {
-        for(int j=(i+1); j<C.size(); ++j)
+        for(int j=(i+1); j<C.cols(); ++j)
         {
             dt = std::abs(t[i] - t[j]);
 
