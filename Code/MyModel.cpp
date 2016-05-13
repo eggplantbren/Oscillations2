@@ -11,7 +11,7 @@ const Data& MyModel::data = Data::get_instance();
 
 MyModel::MyModel()
 :modes(2, 100, false,
-        MyConditionalPrior(0.0, 200E-6),
+        MyConditionalPrior(0.0, 10E-6),
         PriorType::log_uniform)
 ,C(data.get_y().size(), data.get_y().size())
 {
